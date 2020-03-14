@@ -1,8 +1,11 @@
 # Chicago-Divvy-DPA-Project
 
 Overview:
-   Divvy bikes system is gaining quick popularity around the world pretty quickly. The system consists of a fleet of bikes placed in a network of docking stations. Each of these docking stations consists of multiple docks that are used to pick up or drop bikes. These bikes can be rented by the people and then returned to any docking station. The trips are charged on the basis of time used and not the distance used. When this dataset is combined with the dataset of weather of Chicago it can be used to derive very useful insights and make predictions that can help the Divvy company to strategize better in terms of maintenance, checking need of new stations and bikes, checking the need of docks at a station and more, in order to provide better service to its customers and earn profits. 
+
+ Divvy bikes system is gaining quick popularity around the world pretty quickly. The system consists of a fleet of bikes placed in a network of docking stations. Each of these docking stations consists of multiple docks that are used to pick up or drop bikes. These bikes can be rented by the people and then returned to any docking station. The trips are charged on the basis of time used and not the distance used. When this dataset is combined with the dataset of weather of Chicago it can be used to derive very useful insights and make predictions that can help the Divvy company to strategize better in terms of maintenance, checking need of new stations and bikes, checking the need of docks at a station and more, in order to provide better service to its customers and earn profits. 
+ 
 Problem Statement: 
+
 We aim to answer, following questions for the Divvy company with the help of divvy and weather datasets: 
 
 i) Predicting the need of bikes according to season in Chicago in order to ensure that the customers do not have to wait for more bikes, by ensuring the increase or decrease in the number or bikes at the docking station to maintain the profit.  (KK / MT)
