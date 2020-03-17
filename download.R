@@ -1,18 +1,18 @@
 library(httr)
 library(jsonlite)
 library(lubridate)
-url<-"https://api.darksky.net/forecast/9d855b766c1cbca72e1461a3e7e476e6/41.8781, -87.6298,1514764800"
-username<-"kkini1@hawk.iit.edu"
-password<-"Kashika3#"
-get_data <- GET(url, authenticate(username,password, type = "basic"))
-get_data_text<-content(get_data,"text")
-get_data_json <- fromJSON(get_data_text, flatten = TRUE)
-get_data_df <- as.data.frame(get_data_json)
-url<-"https://api.darksky.net/forecast/9d855b766c1cbca72e1461a3e7e476e6/41.8781, -87.6298,1546304400"
-get_data1 <- GET(url, authenticate(username,password, type = "basic"))
-get_data_text1<-content(get_data1,"text")
-get_data_json1 <- fromJSON(get_data_text1, flatten = TRUE)
-get_data_df1 <- as.data.frame(get_data_json1)
+#url<-"https://api.darksky.net/forecast/9d855b766c1cbca72e1461a3e7e476e6/41.8781, -87.6298,1514764800"
+#username<-"kkini1@hawk.iit.edu"
+#password<-"Kashika3#"
+#get_data <- GET(url, authenticate(username,password, type = "basic"))
+#get_data_text<-content(get_data,"text")
+#get_data_json <- fromJSON(get_data_text, flatten = TRUE)
+#get_data_df <- as.data.frame(get_data_json)
+#url<-"https://api.darksky.net/forecast/9d855b766c1cbca72e1461a3e7e476e6/41.8781, -87.6298,1546304400"
+#get_data1 <- GET(url, authenticate(username,password, type = "basic"))
+#get_data_text1<-content(get_data1,"text")
+#get_data_json1 <- fromJSON(get_data_text1, flatten = TRUE)
+#get_data_df1 <- as.data.frame(get_data_json1)
 
 date<-vector()
 weather_summary<-vector()
