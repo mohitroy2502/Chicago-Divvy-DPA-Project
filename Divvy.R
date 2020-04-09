@@ -57,3 +57,102 @@ train_data
 #train <- divvy_df[train_ind, ]
 #test <- divvy_df[-train_ind, ]
 
+# Duration of Rentals
+
+train_data$duration.mins <- train_data$tripduration/60
+summary(train_data$duration.mins)
+
+sum(train_data$duration.mins > 90) / nrow(train_data)
+
+sum(train_data$duration.mins <= 30) / nrow(train_data)
+
+# Rental Time of Day
+
+train_data$time.hour <- as.numeric(strftime(train_data$starttime, format = "%H"))
+
+# Are Divvy rentals occurring at the same time during the weekends as they are during the weekdays
+
+train_data$day <- weekdays(as.Date(train_data$starttime))
+train_data$day <- as.factor(train_data$day)
+train_data$day <- factor(train_data$day, levels = c("Sunday", "Monday", "Tuesday", 
+                                          "Wednesday","Thursday", "Friday", 
+                                          "Saturday"))
+train_dataTime <- separate(subset(train_data, !is.na(starttime)), starttime, 
+                      c("start.date", "start.time"), sep = " ")
+train_dataTime <- subset(train_dataTime, select = c(start.date, time.hour, day))
+train_dataTime$time.hour <- as.factor(train_dataTime$time.hour)
+train_dataTime.count <- train_dataTime %>%
+      group_by(start.date, time.hour) %>%
+      summarize(count = n())
+
+# variance of time of rental between the weekday and the weekend.
+
+train_dataTime$day <- as.factor(train_dataTime$day)
+
+train_dataTime.count.weekday <- subset(train_dataTime, day != 'Saturday' & 
+                                        day != 'Sunday') %>%
+      group_by(start.date, time.hour) %>%
+      summarize(count = n())
+
+train_dataTime.count.weekend <- subset(train_dataTime, day == 'Saturday' 
+                                  | day == 'Sunday') %>%
+      group_by(start.date, time.hour) %>%
+      summarize(count = n())
+
+
+# I am spliting the data by day, station, and user type. This will allow me to 
+# count how many renters there are per day per station. I can then find the 
+#median number of renters per station per customer type.
+
+train_data.date.split <- separate(subset(train_data, !is.na(starttime)), 
+                             starttime, c("start.date", "start.time"), 
+                             sep = " ")
+
+CusSub <- train_data.date.split %>%
+      group_by(usertype, start.date, from_station_id) %>%
+      summarize(count = n()) %>%
+      group_by(usertype, from_station_id) %>%
+      summarize(median = median(count))
+
+
+CusSubDiff <- spread(CusSub, usertype, median)
+CusSubDiff$difference <- CusSubDiff$Customer - CusSubDiff$Subscriber
+
+CusSubDiff.greatest <- subset(CusSubDiff, difference >= 15 
+                              | difference <= -15)
+print(CusSubDiff.greatest, max = 250)
+
+DiffStation <- train_data.date.split %>%
+      group_by(start.date, from_station_id) %>%
+      summarize(median.duration = median(duration.mins)) %>%
+      group_by(from_station_id) %>%
+      summarize(median.duration = median(median.duration))
+
+CusSub.DiffStation <- inner_join(CusSubDiff.greatest, 
+                                 DiffStation, by = "from_station_id")
+
+# Percentage of Renters by Sex and Age
+
+train_data$age.bucket <- cut(train_data$age, breaks = c(16, 24, 34, 44, 54, 64, 74))
+ggplot(aes(x = age.bucket, y = ..count../sum(..count..), 
+           color = gender, fill = gender), 
+       data = subset(train_data, (gender == 'Male' | gender == 'Female') 
+                     & !is.na(age.bucket))) +
+      geom_bar(position = 'dodge') + 
+      scale_y_continuous(labels = percent) +
+      ylab("Percentage of Riders")
+
+# Variance in daily ridership
+
+train_dataTime.by.day <- train_dataTime %>%
+      group_by(start.date, day) %>%
+      summarize(count = n())
+
+aggregate(count~day,train_dataTime.by.day,mean)
+
+# Model Implementations
+
+
+
+
+
