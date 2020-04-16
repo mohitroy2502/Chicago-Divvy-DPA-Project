@@ -39,29 +39,22 @@ test_data<- rbind(q1_2019,q2_2019,q3_2019,q4_2019)
 train_data<- merge(train_data,dock_data,by.x="from_station_id",by.y = "ID",all.x = T,all.y = F)
 test_data<- merge(test_data,dock_data,by.x="from_station_id",by.y = "ID",all.x = T,all.y = F)
 
+# First converting trip duration to numeric and than to mins
+
+train_data$tripduration<-as.numeric(train_data$tripduration)
+
 # Cleaning Data
 
 colSums(is.na(train_data))
-train_data_remove<-train_data[,colSums(is.na(train_data))<75000]
+train_data_remove<-train_data[,colSums(is.na(train_data))<2000000]
 train_data<-na.omit(train_data_remove)
 
-# Looking at busiest from and to stations
-departures <- as.data.frame(table(train_data$from_station_name))
-departures<-setNames(departures, c("Station.Name","departs"))
-head(departures)
 
-arrivals <- as.data.frame(table(train_data$to_station_name))
-arrivals<-setNames(arrivals, c("Station.Name","arrivals"))
-head(arrivals)
-
-# Duration of Rentals in Seconds
-str(train_data$tripduration)
-
-# First converting trip duration to factor then to integer and than to mins
-train_data$tripduration<-as.factor(train_data$tripduration)
-train_data$tripduration<-as.integer(train_data$tripduration)
 train_data$duration.mins <- train_data$tripduration/60
 summary(train_data$duration.mins)
+boxplot(train_data$duration.mins, plot = FALSE)$out
+outliers <- boxplot(train_data$duration.mins, plot = FALSE)$out
+train_data<- train_data[-which(train_data$duration.mins %in% outliers),]
 
 library(lubridate)
 library(stringr)
@@ -80,13 +73,65 @@ train_data$endTime <-n[,2]
 train_data$startDate <- parse_date_time(train_data$startDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
 train_data$endDate <- parse_date_time(train_data$endDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
 
-# Looking for duration of trips
-sum(train_data$duration.mins > 90) / nrow(train_data)
+## For test data
 
-sum(train_data$duration.mins <= 30) / nrow(train_data)
-# We find that around 85% of the rentals are more than 90 minutes
+# First converting trip duration to numeric and than to mins
+
+test_data$tripduration<-as.numeric(test_data$tripduration)
+
+# Cleaning Data
+
+colSums(is.na(test_data))
+test_data_remove<-test_data[,colSums(is.na(test_data))<2000000]
+test_data<-na.omit(test_data_remove)
+
+
+test_data$duration.mins <- test_data$tripduration/60
+summary(test_data$duration.mins)
+boxplot(test_data$duration.mins, plot = FALSE)$out
+outliers1 <- boxplot(test_data$duration.mins, plot = FALSE)$out
+test_data<- test_data[-which(test_data$duration.mins %in% outliers1),]
+
+library(lubridate)
+library(stringr)
+
+# Splitting Date and Time in two different Columns.
+m<-str_split_fixed(test_data$start_time, " ", 2)   
+test_data$startDate <-m[,1]
+test_data$startTime <-m[,2]
+
+m<-str_split_fixed(test_data$end_time, " ", 2)   
+test_data$endDate <-m[,1]
+test_data$endTime <-m[,2]
+
+# Data Cleaning: StartDate present in Varied formats.
+# Hence, made in a single format. (%Y-%m-%d)
+test_data$startDate <- parse_date_time(test_data$startDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
+test_data$endDate <- parse_date_time(test_data$endDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
+
 
 ## Data Analysis
+
+# Looking at busiest from and to stations
+departures <- as.data.frame(table(train_data$from_station_name))
+departures<-setNames(departures, c("Station.Name","departs"))
+head(departures)
+
+arrivals <- as.data.frame(table(train_data$to_station_name))
+arrivals<-setNames(arrivals, c("Station.Name","arrivals"))
+head(arrivals)
+
+# Duration of Rentals in Seconds
+str(train_data$tripduration)
+summary(train_data$tripduration)
+
+# Looking for duration of trips
+sum(train_data$duration.mins > 9) / nrow(train_data)
+
+sum(train_data$duration.mins <= 8) / nrow(train_data)
+# We find that around 45.6% of the rentals are more than 9 minutes
+# Around 46.7% of the rentals are less than or equal to 8 minutes
+
 summary(train_data$Total.Docks)
 
 # Finding number of unique stations
@@ -126,11 +171,87 @@ ggplot(top10, aes(x = Station.Name,y = arrivals, fill = "arrivals")) +
   xlab("Station Name") +
   ylab("Number of Arrivals")
 
-# Density plot of Trip duartion.
-ggplot(train_data, aes(x = log(train_data$tripduration))) +
+# Density plot of Trip duartion
+ggplot(train_data, aes(x = train_data$duration.mins)) +
   geom_density() +
-  # geom_text(aes(label="ylab")) +
-  ggtitle("Usertype vs Number of trips") +
-  xlab("Usertype") +
+  ggtitle("Density plot of Trip duartion") +
+  xlab("Duration in Mins") +
   ylab("Number of Trips")
+  
+# Scatterplot of Longitude and Latitude
 
+ggplot(train_data,aes(x=Longitude,y=Latitude)) + 
+  geom_point()
+
+## Model Implementations
+
+# Estimating need of dock station by calculating difference of departure and arrival
+# If arrival-departure is negative we need to add dock station in between
+
+checkout_data$Dock_diff <-(checkout_data$arrivals-checkout_data$departs)
+
+negative_station<-checkout_data[which(checkout_data$Dock_diff<0),]
+nrow(negative_station)
+summary(negative_station$Dock_diff)
+boxplot(negative_station$Dock_diff,plot = FALSE)$out
+outliers2 <- boxplot(negative_station$Dock_diff, plot = FALSE)$out
+negative_station<- negative_station[which(negative_station$Dock_diff %in% outliers2),]
+
+# These are the 22 station names where we are going to add more docking station in between
+# to help Divvy not lose it's customers.
+
+negative_station$Station.Name
+
+#Adding a new column of giving yes if we need a new dock station and no if we don't 
+
+
+# KNN
+
+##the column of training dataset because that is what we need to predict about testing dataset
+
+x_train<-train_data[c('to_station_id','duration.mins','Latitude','Longitude')]
+y_train <- train_data[c('Total.Docks')]
+x_test<-test_data[c('to_station_id','duration.mins','Latitude','Longitude')]
+y_test<-test_data[c('Total.Docks')]
+cl<-as.factor(train_data[c('from_station_id')])
+
+##run knn function
+library(class)
+nrow(train_data[c('from_station_id')])
+length(x_train)
+pr <- knn(x_train,y_train,cl,k=1)
+
+##create the confusion matrix
+tb <- table(pr,)
+
+##check the accuracy
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tb)
+
+# Making correlation plot to find hyperparameters
+
+library(corrplot)
+train_data_new<-as.numeric(train_data)
+corrplot_main<-cor(train_data_new)
+corrplot(corrplot_main,method = "number")
+
+# Logistic Regression
+library(stats)
+model1= glm(formula = Total.Docks ~ duration.mins + to_station_id + Longitude + Latitude, family=binomial, data = train_data)
+ 
+target1 = predict(model1, newdata = test_data)
+
+# Decision Tree Classification to the Training set
+
+library(rpart)
+
+dtree = rpart(formula = Total.Docks ~  duration.mins + to_station_id + Longitude + Latitude ,
+                    data = train_data)
+Test1<-test_data
+target2 = predict(dtree, newdata = Test1, type = 'class')
+
+# Making the Confusion Matrix
+library(caret)
+
+confusion = confusionMatrix(reference = test_data$Total.Docks, data = target2)
+confusion
