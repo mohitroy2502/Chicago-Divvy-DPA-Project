@@ -74,53 +74,35 @@ Dst$TotalTrips <- as.numeric(Dst$TotalTrips)
 # Maintenance = 0 (Dosen't need Maintenance)
 # Maintenance = 1 (Needs Maintenance)
 Dst$Maintenance <- 0
-Dst$Maintenance[(Dst$TotalDuration>110000 | Dst$No.Of.Trips>80) & (Dst$Weather_Icon == "clear-day" | Dst$Weather_Icon == "partly-cloudy-day" | Dst$Weather_Icon == "cloudy") & (Dst$TotalTrips < 11000)] <- 1
+Dst$Maintenance[(Dst$TotalDuration>110000 | Dst$No.Of.Trips>80) & (Dst$Weather_Icon == "clear-day" | Dst$Weather_Icon == "partly-cloudy-day" | Dst$Weather_Icon == "cloudy") & (Dst$TotalTrips < 15000)] <- 1
 
 # Encoding the target feature as factor.
 Dst$Maintenance = factor(Dst$Maintenance, levels = c(0, 1))
 
-# Dividing Training and Testing Dataset.
-# library(caTools)
-# set.seed(1234)
-# split = sample.split(Dst$from_station_name, SplitRatio = 0.8)
-# TrainDst = subset(Dst, split == TRUE)
-# TestDst = subset(Dst, split == FALSE)
-# library('caret')
-# set.seed(1234)
-# partition <- createDataPartition(y = Dst$from_station_name, p = 0.8, list = FALSE)
-# TrainDst <- Dst[partition,]
-# TestDst <- Dst[-partition,]
-# stopifnot(nrow(TrainDst) + nrow(TestDst) == nrow(Dst))
-
 # Dividing the main DataSet into Training and Testing Dataset.
 # 2017-18 as Training Dataset.
 # 2019 as Testing Dataset.
-
 Dst <- as.data.frame(Dst)
 
 Train <- subset(Dst, (Dst$MainDate > "2017-01-01" & Dst$MainDate < "2018-12-31"))
 Test <- subset(Dst, (Dst$MainDate > "2019-01-01" & Dst$MainDate < "2019-12-31"))
 
-# Implementing Decision Tree Classification.
 
+# Implementing Support Vector Machine.
 
-# Fitting Decision Tree Classification to the Training set
-# install.packages('rpart')
-library(rpart)
-classifier1 = rpart(formula = Maintenance ~ bikeid + TotalDuration + No.Of.Trips + Weather_Icon + MainDate + TotalTrips,
-                    data = Train)
+# install.packages('e1071')
+library(e1071)
 
-y_pred1 = predict(classifier1, newdata = Test, type = 'class')
+classifier3 = svm(formula = Maintenance ~ bikeid + TotalDuration + Weather_Icon + TotalTrips, data= Train, type= 'C-classification', kernal= 'linear')
+
+y_pred3 = predict(classifier3, newdata = Test)
+
+cm3 = confusionMatrix(reference = Test$Maintenance, data = y_pred3)
+cm3
 
 # Visualize the output.
 
-Test$Maintenance = y_pred1
-
-# library(data.table)
-# Test <- data.table(Test)
-# MainD <- Test[, .(rowCount = .N), by =MainDate]
-# median(MainD$rowCount)
-
+Test$Maintenance = y_pred3
 
 Visualize <- function(x){
   
@@ -137,32 +119,3 @@ Visualize1 <- function(x){
 Visualize("2019-01-17")
 Visualize("2019-02-08")
 Visualize1("2019-02-18")
-
-xy=unique(Test[Test$MainDate=="2019-02-18" & Test$Maintenance==0,c("bikeid", 'Maintenance', "MainDate", "Weather_Icon")])
-
-
-# Making the Confusion Matrix
-library('caret')
-cm1 = confusionMatrix(reference = Test$Maintenance, data = y_pred1)
-cm1
-# Dst$MainDate = as.Date(Dst$MainDate)
-# 
-# regressor = rpart(formula = MainDate ~ bikeid + TotalDuration + No.Of.Trips + Weather_Icon + TotalTrips + Maintenance,
-#                   data = Train,
-#                   control = rpart.control(minsplit = 1))
-# 
-# y_pred = predict(regressor, newdata = Test)
-# 
-# regressor <- lm(formula = MainDate ~ bikeid + TotalDuration + No.Of.Trips + Weather_Icon + Maintenance + TotalTrips,
-#                 data = Train)
-# summary(regressor)
-
-# Class Professor.
-install.packages('rattle')
-install.packages('rpart.plot')
-install.packages('RColorBrewer')
-library(rattle)
-library(rpart.plot)
-library(RColorBrewer)
-
-fancyRpartPlot(classifier1)
