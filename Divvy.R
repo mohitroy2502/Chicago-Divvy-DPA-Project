@@ -5,6 +5,9 @@
 # Heavy stations are identified as stations from where most trips start and most trips end and not
 # whose dock capacity is initially larger because we need to identify stations which are the busiest.
 
+# Increasing Memory limit
+memory.limit(size=56000)
+
 # Importing all separate quarter data 
 q1_2017 = as.data.frame(read.csv("D:\\Divvy Datasets\\Divvy_Trips_2017_Q1.csv"))
 q2_2017 = as.data.frame(read.csv("D:\\Divvy Datasets\\Divvy_Trips_2017_Q2.csv"))
@@ -36,123 +39,98 @@ test_data<- rbind(q1_2019,q2_2019,q3_2019,q4_2019)
 train_data<- merge(train_data,dock_data,by.x="from_station_id",by.y = "ID",all.x = T,all.y = F)
 test_data<- merge(test_data,dock_data,by.x="from_station_id",by.y = "ID",all.x = T,all.y = F)
 
+# Cleaning Data
+
+colSums(is.na(train_data))
+train_data_remove<-train_data[,colSums(is.na(train_data))<75000]
+train_data<-na.omit(train_data_remove)
+
 # Looking at busiest from and to stations
-departures <- table(train_data$from_station_name)
-as.matrix(head(sort(departures,decreasing = TRUE)))
+departures <- as.data.frame(table(train_data$from_station_name))
+departures<-setNames(departures, c("Station.Name","departs"))
+head(departures)
 
-arrivals <- table(train_data$to_station_name)
-as.matrix(head(sort(arrivals,decreasing = TRUE)))
+arrivals <- as.data.frame(table(train_data$to_station_name))
+arrivals<-setNames(arrivals, c("Station.Name","arrivals"))
+head(arrivals)
 
+# Duration of Rentals in Seconds
+str(train_data$tripduration)
 
-train_data
-#str(divvy_df)                     
-
-## 75% of the sample size
-#smp_size <- floor(0.75 * nrow(divvy_df))
-
-## set the seed to make your partition reproducible
-#set.seed(123)
-#train_ind <- sample(seq_len(nrow(divvy_df)), size = smp_size)
-
-#train <- divvy_df[train_ind, ]
-#test <- divvy_df[-train_ind, ]
-
-# Duration of Rentals
-
+# First converting trip duration to factor then to integer and than to mins
+train_data$tripduration<-as.factor(train_data$tripduration)
+train_data$tripduration<-as.integer(train_data$tripduration)
 train_data$duration.mins <- train_data$tripduration/60
 summary(train_data$duration.mins)
 
+library(lubridate)
+library(stringr)
+
+# Splitting Date and Time in two different Columns.
+n<-str_split_fixed(train_data$start_time, " ", 2)   
+train_data$startDate <-n[,1]
+train_data$startTime <-n[,2]
+
+n<-str_split_fixed(train_data$end_time, " ", 2)   
+train_data$endDate <-n[,1]
+train_data$endTime <-n[,2]
+
+# Data Cleaning: StartDate present in Varied formats.
+# Hence, made in a single format. (%Y-%m-%d)
+train_data$startDate <- parse_date_time(train_data$startDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
+train_data$endDate <- parse_date_time(train_data$endDate, orders = c("%m/%d/%Y", "%Y-%m-%d"))
+
+# Looking for duration of trips
 sum(train_data$duration.mins > 90) / nrow(train_data)
 
 sum(train_data$duration.mins <= 30) / nrow(train_data)
+# We find that around 85% of the rentals are more than 90 minutes
 
-# Rental Time of Day
+## Data Analysis
+summary(train_data$Total.Docks)
 
-train_data$time.hour <- as.numeric(strftime(train_data$starttime, format = "%H"))
-
-# Are Divvy rentals occurring at the same time during the weekends as they are during the weekdays
-
-train_data$day <- weekdays(as.Date(train_data$starttime))
-train_data$day <- as.factor(train_data$day)
-train_data$day <- factor(train_data$day, levels = c("Sunday", "Monday", "Tuesday", 
-                                          "Wednesday","Thursday", "Friday", 
-                                          "Saturday"))
-train_dataTime <- separate(subset(train_data, !is.na(starttime)), starttime, 
-                      c("start.date", "start.time"), sep = " ")
-train_dataTime <- subset(train_dataTime, select = c(start.date, time.hour, day))
-train_dataTime$time.hour <- as.factor(train_dataTime$time.hour)
-train_dataTime.count <- train_dataTime %>%
-      group_by(start.date, time.hour) %>%
-      summarize(count = n())
-
-# variance of time of rental between the weekday and the weekend.
-
-train_dataTime$day <- as.factor(train_dataTime$day)
-
-train_dataTime.count.weekday <- subset(train_dataTime, day != 'Saturday' & 
-                                        day != 'Sunday') %>%
-      group_by(start.date, time.hour) %>%
-      summarize(count = n())
-
-train_dataTime.count.weekend <- subset(train_dataTime, day == 'Saturday' 
-                                  | day == 'Sunday') %>%
-      group_by(start.date, time.hour) %>%
-      summarize(count = n())
+# Finding number of unique stations
+length(unique(unlist(train_data[c("Station.Name")])))
+# unique(unlist(train_data[c("Station.Name")]))
 
 
-# I am spliting the data by day, station, and user type. This will allow me to 
-# count how many renters there are per day per station. I can then find the 
-#median number of renters per station per customer type.
+checkout_data<- merge(departures,arrivals,by.x="Station.Name",by.y = "Station.Name",all.x = T,all.y = T)
+checkout_data<- merge(checkout_data,dock_data,by.x="Station.Name",by.y = "Station.Name",all.x = T,all.y = T)
+checkout_data<-checkout_data[-c(6:10)]
+colSums(is.na(checkout_data))
+checkout_data_remove<-checkout_data[,colSums(is.na(checkout_data))<75]
+checkout_data<-na.omit(checkout_data_remove)
+checkout_data <- checkout_data[order(-checkout_data$departs, -checkout_data$arrivals),]
+top10<-head(checkout_data,10)
 
-train_data.date.split <- separate(subset(train_data, !is.na(starttime)), 
-                             starttime, c("start.date", "start.time"), 
-                             sep = " ")
+summary(checkout_data$departs)
+boxplot(checkout_data$departs)
 
-CusSub <- train_data.date.split %>%
-      group_by(usertype, start.date, from_station_id) %>%
-      summarize(count = n()) %>%
-      group_by(usertype, from_station_id) %>%
-      summarize(median = median(count))
-
-
-CusSubDiff <- spread(CusSub, usertype, median)
-CusSubDiff$difference <- CusSubDiff$Customer - CusSubDiff$Subscriber
-
-CusSubDiff.greatest <- subset(CusSubDiff, difference >= 15 
-                              | difference <= -15)
-print(CusSubDiff.greatest, max = 250)
-
-DiffStation <- train_data.date.split %>%
-      group_by(start.date, from_station_id) %>%
-      summarize(median.duration = median(duration.mins)) %>%
-      group_by(from_station_id) %>%
-      summarize(median.duration = median(median.duration))
-
-CusSub.DiffStation <- inner_join(CusSubDiff.greatest, 
-                                 DiffStation, by = "from_station_id")
-
-# Percentage of Renters by Sex and Age
-
-train_data$age.bucket <- cut(train_data$age, breaks = c(16, 24, 34, 44, 54, 64, 74))
-ggplot(aes(x = age.bucket, y = ..count../sum(..count..), 
-           color = gender, fill = gender), 
-       data = subset(train_data, (gender == 'Male' | gender == 'Female') 
-                     & !is.na(age.bucket))) +
-      geom_bar(position = 'dodge') + 
-      scale_y_continuous(labels = percent) +
-      ylab("Percentage of Riders")
-
-# Variance in daily ridership
-
-train_dataTime.by.day <- train_dataTime %>%
-      group_by(start.date, day) %>%
-      summarize(count = n())
-
-aggregate(count~day,train_dataTime.by.day,mean)
-
-# Model Implementations
+library(ggplot2)
 
 
+# Top 10 stations with most Departures
 
+ggplot(top10, aes(x = Station.Name,y = departs, fill = "departs")) +
+  geom_bar(stat='identity',color = "black") +
+  ggtitle("Top 10 stations with most Departures") +
+  scale_fill_brewer(palette="Dark2")+
+  xlab("Station Name") +
+  ylab("Number of Departures")
 
+# Top 10 stations with most Arrivals
+
+ggplot(top10, aes(x = Station.Name,y = arrivals, fill = "arrivals")) +
+  geom_bar(stat='identity',color = "black", fill="blue1") +
+  ggtitle("Top 10 stations with most Arrivals") +
+  xlab("Station Name") +
+  ylab("Number of Arrivals")
+
+# Density plot of Trip duartion.
+ggplot(train_data, aes(x = log(train_data$tripduration))) +
+  geom_density() +
+  # geom_text(aes(label="ylab")) +
+  ggtitle("Usertype vs Number of trips") +
+  xlab("Usertype") +
+  ylab("Number of Trips")
 
