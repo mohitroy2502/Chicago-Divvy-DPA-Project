@@ -17,4 +17,5 @@ Out of three ML algorithms applied it can be observed that knn Classification gi
 
 In order to load model from .sav file use following command:
 
+import pickle
 loaded_model = joblib.load(filename)
