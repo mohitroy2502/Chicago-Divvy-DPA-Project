@@ -1,6 +1,7 @@
 library(stringr)
 library(chron)
 
+#Reading the datasets
 Divvy2018=read.csv("divvy2018.csv")
 names(Divvy2018)<-c('trip_id','start_time','end_time','bikeid','tripduration','from_station_id','from_station_name','to_station_id','to_station_name','usertype','gender','birthyear')
 start=str_split_fixed(Divvy2018$start_time,' ',2)
@@ -28,6 +29,7 @@ end=str_split_fixed(Divvy2017$end_time,' ',2)
 Divvy2017$`End Date`=as.Date(end[,1],format="%m/%d/%Y")
 Divvy2017$`End Time`=chron(times=end[,2])
 
+#Plotting Graphs and maps
 library(plyr)
 library(lubridate)
 library(dplyr)
@@ -65,10 +67,12 @@ d<-merge(Stations,st,by.x = 'ID')
 Divvy2017<-Divvy2017[order(Divvy2017$`Start Date`),]
 divvyTrain<-rbind(Divvy2017,Divvy2018)
 
+#Creating the Trip Dataset
 #divvyTrain_bydate<-as.data.frame(table(divvyTrain$`Start Date`))
 divvyTrain$startTimeHour <- as.numeric(str_split_fixed(divvyTrain$`Start Time`,":",3)[,1])
 divvyTrain[divvyTrain$`Start Date` %in% dates,]$startTimeHour <- 
   as.numeric(str_split_fixed(str_split_fixed(divvyTrain[divvyTrain$`Start Date` %in% dates,]$start_time," ",2)[,2],":",2)[,1])
+#Selecting the station ID with most frequently used on a daily basis.
 divvyTrain<-divvyTrain[divvyTrain$from_station_id==35,]
 
 
@@ -136,6 +140,7 @@ row.names(divvytest_bydatehour) <- NULL
 
 write.table(divvytest_bydatehour,"DivvyTripDataforID35Test.csv",col.names = TRUE,row.names=FALSE,sep=',')
 
+#Plotting Maps
 #All divvy stations
 ggmap(chicago) +
   geom_point(data = Stations,
@@ -157,13 +162,15 @@ ggmap(chicago) +
              alpha = .5) +
   scale_size_area(max_size = 5) +
   ggtitle("Daily Avg number of trips from stations in 2019")
-#for ID=35
+
+#Fetching Available Bikes Dataset
+#for ID=35 (Most Frequent Station)
 library(RSocrata)
 df<-read.socrata(
   "https://data.cityofchicago.org/resource/eq45-8inv.csv?id=35",
-  app_token = "MS1kqh9EMeAImOlbSZ71bfFJv",
-  email     = "kkini1@hawk.iit.edu",
-  password  = "Kashika3#"
+  app_token = "",
+  email     = "",
+  password  = ""
 )
 
 library(dplyr)
