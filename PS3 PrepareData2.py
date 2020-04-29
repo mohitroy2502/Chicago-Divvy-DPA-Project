@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr 11 04:27:24 2020
-
 @author: Manish Tandel
 """
 import pandas as pd
