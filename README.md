@@ -20,6 +20,8 @@ Plotting some graphs and maps for data visualization.
 
 Step 6:
 Creating the Train(2017-18) and Test(2019) datatset.
+Target Variable: Trip count on an hourly basis.
+Independent variable: Available bikes on an hourly basis, date, hour and the weather icon provided by Dark Sky.
 
 Step 7:
 Running 4 Algorithms: Multiple Linear Regression, Ridge Regression, Lasso Regression and ElasticNet Regression.
