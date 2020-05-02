@@ -22,7 +22,7 @@ Step 6:
 Creating the Train(2017-18) and Test(2019) datatset.
 
 Step 7:
-Performing 4 Algorithms: Multiple Linear Regression, Ridge Regression, Lasso Regression and ElasticNet Regression.
+Running 4 Algorithms: Multiple Linear Regression, Ridge Regression, Lasso Regression and ElasticNet Regression.
 
 Step 8:
 Calculating RMSE on Test Data and comparing the values.
