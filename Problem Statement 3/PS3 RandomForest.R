@@ -5,7 +5,7 @@ library(stringr)
 library(dplyr)
 library(data.table)
 library(ggplot2)
-
+ 
 # Importing Transformed Datasets.
 
 Q1_2017 <- read.csv('Q1_2017_.csv', header = TRUE)
