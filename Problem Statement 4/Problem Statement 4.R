@@ -14,6 +14,7 @@ library(modelr)
 library(broom)
 library(tidyselect)
 
+
 divvyAvl<-read.csv("DivvyAvlBikesID35.csv")
 weatherTest<-read.csv("weatherTest.csv")
 weatherTrain<-read.csv("weatherTrain.csv")
