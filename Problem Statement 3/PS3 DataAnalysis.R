@@ -39,7 +39,6 @@ DockDst <- read.csv('Divvy_Bicycle_Stations.csv', header = TRUE)
 # Merging Dock Dataset with main Dataset.
 Dst <- merge(Dst, DockDst, by.x = "from_station_id", by.y = "ID", all.x = T, all.y = F)
 
-
 # ************************************************************************************ #
 # Data Cleaning and Transformation.
 
