@@ -6,7 +6,6 @@ library(tidyverse)
 library(dplyr)
 library(stringr)
  
-
 start_date<-as.Date("2017-01-01 00:00:00")
 end_date<-as.Date("2017-12-31 00:00:00")
 dates<-seq(start_date,end_date,by="days")
