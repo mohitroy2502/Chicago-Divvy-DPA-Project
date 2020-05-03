@@ -185,4 +185,3 @@ df1_date<-df1_date[,c("date","hour","sum_bikes")]
 colnames(df1_date)<-c("Date","Hour","Available_bikes")
 #df1_bydate$Hourly_Avg_avl_bikes<-ceiling(df1_bydate$Hourly_Avg_avl_bikes/24)
 write.table(df1_date,"DivvyAvlBikesID35.csv",col.names = TRUE,row.names=FALSE,sep=',')
-
