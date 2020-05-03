@@ -120,7 +120,7 @@ Visualize1 <- function(x){
   xx=unique(Test[Test$MainDate==x & Test$Maintenance==0,c("MainDate", "Weather_Icon")])
   xx
 }
-
+ 
 Visualize("2019-01-17")
 Visualize("2019-02-08")
 Visualize1("2019-02-18")
