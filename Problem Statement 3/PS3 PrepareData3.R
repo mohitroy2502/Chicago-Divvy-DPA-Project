@@ -4,7 +4,7 @@ library(stringr)
 # install.packages("dplyr")
 library(dplyr)
 library(data.table)
-library(ggplot2)
+library(ggplot2) 
 
 # Preparing a dataset with two attributes with Number of trips recorded by Divvy
 # on every date.
